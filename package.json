@@ -4,12 +4,8 @@
     "description": "",
     "main": "index.js",
     "scripts": {
-      "build": "react-scripts build",  
-      "start": "react-scripts start"
+      "build": "echo 'No build command needed'"
     },
-    "dependencies": {
-      "react": "^18.0.0",
-      "react-dom": "^18.0.0"
-    }
+    "dependencies": {}
   }
   
