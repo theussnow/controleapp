@@ -1,4 +1,4 @@
 [build]
   base = "/"
-  command = "npm run build"
-  publish = "/"
+  command = "echo 'No build command needed'"  # Nenhum comando de build
+  publish = "/"  # Diretório raiz onde os arquivos HTML estão
