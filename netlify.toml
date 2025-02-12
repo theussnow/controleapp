@@ -1,4 +1,7 @@
 [build]
   base = "/"
-  command = "echo 'No build command needed'"  # Nenhum comando de build
-  publish = "/"  # Diretório raiz onde os arquivos HTML estão
+  command = "echo 'No build command needed'"  # Não precisa de comando de build
+  publish = "/"
+
+[functions]
+  directory = "/functions"  # Certifique-se de que não há funções para configurar
