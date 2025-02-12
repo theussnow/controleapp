@@ -1,6 +1,4 @@
 [build]
-  publish = "app_aposta" # Troque pelo diretório correto (ex: "controleapp" se os arquivos estiverem na raiz)
-  command = ""
-
-[functions]
-  directory = "netlify/functions"
+  base = "/"
+  publish = "/"
+  command = "npm run build"
