@@ -30,6 +30,9 @@ function adicionarAposta() {
 
     // Limpar o formulário
     document.getElementById('apostaForm').reset();
+
+    // Recarregar as apostas da tabela
+    window.onload(); // Chama novamente a função que carrega as apostas
 }
 
 // Função para adicionar uma linha na tabela
@@ -39,17 +42,21 @@ function adicionarLinhaTabela(aposta) {
 
     let statusButton = `<button onclick="editarStatus(this)">Editar Status</button>`;
 
-    // Exibir a data sem as horas, ou exibir uma célula vazia se a data não estiver presente
+    // Se algum valor for nulo, defina um valor padrão
+    let odd = aposta.odd ? aposta.odd.toFixed(2) : 'N/A';
+    let valor = aposta.valor ? aposta.valor.toFixed(2) : 'N/A';
+    let lucro = aposta.lucro ? aposta.lucro.toFixed(2) : 'N/A';
+    let descricao = aposta.descricao || 'Sem descrição';
     let dataFormatada = aposta.data ? formatarData(aposta.data) : 'Não definida';
 
     linha.innerHTML = `
         <td><a href="${aposta.site}" target="_blank" class="hidden-link">${aposta.nomeSite}</a></td>
-        <td>${aposta.odd.toFixed(2)}</td>
-        <td>R$ ${aposta.valor.toFixed(2)}</td>
-        <td>R$ ${aposta.lucro.toFixed(2)}</td>
-        <td>${aposta.descricao}</td>
+        <td>${odd}</td>
+        <td>R$ ${valor}</td>
+        <td>R$ ${lucro}</td>
+        <td>${descricao}</td>
         <td><span class="status">${aposta.status}</span></td>
-        <td class="data-td">${dataFormatada}</td> <!-- Exibe a data formatada ou 'Não definida' -->
+        <td class="data-td">${dataFormatada}</td>
         <td>
             ${statusButton}
             <button onclick="removerAposta(this)">Remover</button>
