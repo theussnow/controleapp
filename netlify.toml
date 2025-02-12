@@ -1,7 +1,6 @@
 [build]
-  base = "/"
-  command = "echo 'No build command needed'"  # Não precisa de comando de build
-  publish = "/"
+  base = "/"  # Se seus arquivos estão na raiz do repositório
+  command = "echo 'No build command needed'"
+  publish = "/"  # Certifique-se de que os arquivos estão realmente na raiz
 
-[functions]
-  directory = "/functions"  # Certifique-se de que não há funções para configurar
+
