@@ -4,7 +4,7 @@ function adicionarAposta() {
     let odd = parseFloat(document.getElementById('odd').value);
     let valor = parseFloat(document.getElementById('valor').value);
     let descricao = document.getElementById('descricao').value;
-    let data = document.getElementById('data').value || ''; // A data agora é opcional
+    let data = document.getElementById('data').value || ''; 
     let lucro = (odd * valor) - valor;
 
     let nomeSite = site.length > 20 ? site.substring(0, 20) + "..." : site;
@@ -47,7 +47,7 @@ function adicionarLinhaTabela(aposta) {
     let valor = aposta.valor ? aposta.valor.toFixed(2) : 'N/A';
     let lucro = aposta.lucro ? aposta.lucro.toFixed(2) : 'N/A';
     let descricao = aposta.descricao || 'Sem descrição';
-    let dataFormatada = aposta.data ? formatarData(aposta.data) : 'Não definida';
+    let dataFormatada = aposta.data ? /*formatarData?*/(aposta.data) : 'Não definida';
 
     linha.innerHTML = `
         <td><a href="${aposta.site}" target="_blank" class="hidden-link">${aposta.nomeSite}</a></td>

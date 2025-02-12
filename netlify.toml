@@ -1,0 +1,4 @@
+[build]
+  publish = "app_aposta"  # Define a pasta que contém o index.html
+
+  
