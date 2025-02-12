@@ -16,8 +16,8 @@ function adicionarAposta() {
         valor: valor,
         lucro: lucro,
         descricao: descricao,
-        status: 'Em andamento', 
-        data: data 
+        status: 'Em andamento',
+        data: data
     };
 
     // Adicionar aposta à tabela
@@ -32,7 +32,7 @@ function adicionarAposta() {
     document.getElementById('apostaForm').reset();
 
     // Recarregar as apostas da tabela
-    window.onload(); // Chama novamente a função que carrega as apostas
+    carregarApostas();
 }
 
 // Função para adicionar uma linha na tabela
@@ -64,9 +64,23 @@ function adicionarLinhaTabela(aposta) {
     `;
 }
 
+// Função para carregar as apostas salvas no localStorage ao abrir a página
+function carregarApostas() {
+    let apostasSalvas = JSON.parse(localStorage.getItem('apostas')) || [];
+    let tabela = document.getElementById('tabelaApostas');
+    tabela.innerHTML = ""; // Limpa a tabela antes de adicionar as apostas
+
+    apostasSalvas.forEach(adicionarLinhaTabela);
+}
+
 // Função para formatar a data no formato dd/mm/aaaa
 function formatarData(data) {
-    const [dia, mes, ano] = data.split('/');  // Divide a data no formato dd/mm/aaaa
+    if (!data || !data.includes('/')) return 'Não definida';
+
+    let partes = data.split('/');
+    if (partes.length !== 3) return 'Não definida';
+
+    let [dia, mes, ano] = partes;
     return `${dia.padStart(2, '0')}/${mes.padStart(2, '0')}/${ano}`;
 }
 
@@ -98,17 +112,16 @@ function editarStatus(botao) {
 // Função para remover uma aposta
 function removerAposta(botao) {
     let linha = botao.parentNode.parentNode;
-    linha.parentNode.removeChild(linha);
+    let site = linha.cells[0].innerText;
 
     // Remover a aposta do localStorage
-    let site = linha.cells[0].innerText;
     let apostasSalvas = JSON.parse(localStorage.getItem('apostas')) || [];
-    apostasSalvas = apostasSalvas.filter(aposta => aposta.site !== site);
+    apostasSalvas = apostasSalvas.filter(aposta => aposta.nomeSite !== site);
     localStorage.setItem('apostas', JSON.stringify(apostasSalvas));
+
+    // Remover linha da tabela
+    linha.remove();
 }
 
-// Função para carregar as apostas do localStorage quando a página é carregada
-window.onload = function() {
-    let apostasSalvas = JSON.parse(localStorage.getItem('apostas')) || [];
-    apostasSalvas.forEach(adicionarLinhaTabela);
-}
+// Carregar apostas ao carregar a página
+window.onload = carregarApostas;
