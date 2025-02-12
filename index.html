@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Apostas</title>
+    <link rel="stylesheet" href="/index.css">
+</head>
+<body>
+    <h2>Registro de Apostas</h2>
+    <form id="apostaForm">
+        <input type="text" id="site" placeholder="Site">
+        <input type="number" id="odd" placeholder="Odd" step="0.01">
+        <input type="number" id="valor" placeholder="Valor Investido" step="0.01">
+        <input type="text" id="descricao" placeholder="Descrição da Aposta">
+        <input type="text" id="data" placeholder="Data da Aposta (dd/mm/aaaa)">
+        <button type="button" onclick="adicionarAposta()">Adicionar</button>
+    </form>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Site</th>
+                <th>Odd</th>
+                <th>Valor Investido</th>
+                <th>Lucro</th>
+                <th>Descrição</th>
+                <th>Status</th>
+                <th>Data</th>
+                <th>Ação</th>
+            </tr>
+        </thead>
+        <tbody id="tabelaApostas"></tbody>
+    </table>
+    
+    <script src="/index.js"></script>
+</body>
+</html>
