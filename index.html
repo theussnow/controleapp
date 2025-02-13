@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registro de Apostas</title>
     <link rel="stylesheet" href="index.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
 </head>
 <body>
     <h2>Controle de Apostas</h2>
@@ -13,7 +14,7 @@
         <input type="number" id="odd" placeholder="Odd" step="0.01">
         <input type="number" id="valor" placeholder="Valor Investido" step="0.01">
         <input type="text" id="descricao" placeholder="Descrição da Aposta">
-        <input type="text" id="data" placeholder="Data da Aposta(dd/mm/aaaa)">
+        <input type="text" id="data" placeholder="Data(dd/mm/aaaa)">
         <button type="button" onclick="adicionarAposta()">Adicionar</button>
     </form>
     
@@ -33,6 +34,18 @@
         <tbody id="tabelaApostas"></tbody>
     </table>
     
+    <div class="total-lucro">
+        <h3>Total de Lucro: R$ <span id="totalLucro">0.00</span></h3>
+    </div>
+    
+    <footer>
+        <p>&copy; <span id="anoAtual"></span>Todos os direitos reservados.</p>
+    </footer>
+    
     <script src="index.js"></script>
+    <script>
+        
+        document.getElementById('anoAtual').textContent = new Date().getFullYear();
+    </script>
 </body>
 </html>

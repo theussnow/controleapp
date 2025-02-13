@@ -1,127 +1,183 @@
-// Função para adicionar uma aposta
-function adicionarAposta() {
-    let site = document.getElementById('site').value;
-    let odd = parseFloat(document.getElementById('odd').value);
-    let valor = parseFloat(document.getElementById('valor').value);
-    let descricao = document.getElementById('descricao').value;
-    let data = document.getElementById('data').value || ''; 
-    let lucro = (odd * valor) - valor;
+document.addEventListener("DOMContentLoaded", function () {
+    const dataInput = document.getElementById('data');
 
-    let nomeSite = site.length > 20 ? site.substring(0, 20) + "..." : site;
+    dataInput.addEventListener('input', function (e) {
+        let value = e.target.value.replace(/\D/g, ''); 
+        if (value.length >= 2) {
+            value = value.slice(0, 2) + '/' + value.slice(2);
+        }
+        if (value.length >= 5) {
+            value = value.slice(0, 5) + '/' + value.slice(5, 9);
+        }
+        e.target.value = value;
+    });
 
-    let aposta = {
-        site: site,
-        nomeSite: nomeSite,
-        odd: odd,
-        valor: valor,
-        lucro: lucro,
-        descricao: descricao,
-        status: 'Em andamento',
-        data: data
-    };
+    
+    window.adicionarAposta = function() {
+        let site = document.getElementById('site').value;
+        let odd = parseFloat(document.getElementById('odd').value);
+        let valor = parseFloat(document.getElementById('valor').value);
+        let descricao = document.getElementById('descricao').value;
+        let data = document.getElementById('data').value || ''; 
+        let lucro = (odd * valor) - valor;
 
-    // Adicionar aposta à tabela
-    adicionarLinhaTabela(aposta);
+        let nomeSite = site.length > 20 ? site.substring(0, 20) + "..." : site;
 
-    // Salvar a aposta no localStorage
-    let apostasSalvas = JSON.parse(localStorage.getItem('apostas')) || [];
-    apostasSalvas.push(aposta);
-    localStorage.setItem('apostas', JSON.stringify(apostasSalvas));
+        let aposta = {
+            id: Date.now(), 
+            site: site,
+            nomeSite: nomeSite,
+            odd: odd,
+            valor: valor,
+            lucro: lucro,
+            descricao: descricao,
+            status: 'Em andamento',
+            data: data
+        };
 
-    // Limpar o formulário
-    document.getElementById('apostaForm').reset();
+        
+        adicionarLinhaTabela(aposta);
 
-    // Recarregar as apostas da tabela
-    carregarApostas();
-}
+        
+        let apostasSalvas = JSON.parse(localStorage.getItem('apostas')) || [];
+        apostasSalvas.push(aposta);
+        localStorage.setItem('apostas', JSON.stringify(apostasSalvas));
 
-// Função para adicionar uma linha na tabela
-function adicionarLinhaTabela(aposta) {
-    let tabela = document.getElementById('tabelaApostas');
-    let linha = tabela.insertRow();
+        
+        document.getElementById('apostaForm').reset();
 
-    let statusButton = `<button onclick="editarStatus(this)">Editar Status</button>`;
-
-    // Se algum valor for nulo, defina um valor padrão
-    let odd = aposta.odd ? aposta.odd.toFixed(2) : 'N/A';
-    let valor = aposta.valor ? aposta.valor.toFixed(2) : 'N/A';
-    let lucro = aposta.lucro ? aposta.lucro.toFixed(2) : 'N/A';
-    let descricao = aposta.descricao || 'Sem descrição';
-    let dataFormatada = aposta.data ? /*formatarData?*/(aposta.data) : 'Não definida';
-
-    linha.innerHTML = `
-        <td><a href="${aposta.site}" target="_blank" class="hidden-link">${aposta.nomeSite}</a></td>
-        <td>${odd}</td>
-        <td>R$ ${valor}</td>
-        <td>R$ ${lucro}</td>
-        <td>${descricao}</td>
-        <td><span class="status">${aposta.status}</span></td>
-        <td class="data-td">${dataFormatada}</td>
-        <td>
-            ${statusButton}
-            <button onclick="removerAposta(this)">Remover</button>
-        </td>
-    `;
-}
-
-// Função para carregar as apostas salvas no localStorage ao abrir a página
-function carregarApostas() {
-    let apostasSalvas = JSON.parse(localStorage.getItem('apostas')) || [];
-    let tabela = document.getElementById('tabelaApostas');
-    tabela.innerHTML = ""; // Limpa a tabela antes de adicionar as apostas
-
-    apostasSalvas.forEach(adicionarLinhaTabela);
-}
-
-// Função para formatar a data no formato dd/mm/aaaa
-function formatarData(data) {
-    if (!data || !data.includes('/')) return 'Não definida';
-
-    let partes = data.split('/');
-    if (partes.length !== 3) return 'Não definida';
-
-    let [dia, mes, ano] = partes;
-    return `${dia.padStart(2, '0')}/${mes.padStart(2, '0')}/${ano}`;
-}
-
-// Função para editar o status da aposta
-function editarStatus(botao) {
-    let linha = botao.parentNode.parentNode;
-    let statusCell = linha.cells[5]; // A célula do status
-    let apostaIndex = linha.rowIndex - 1;
-
-    // Obter status atual
-    let currentStatus = statusCell.innerText;
-
-    // Escolher o novo status
-    let novoStatus = prompt('Informe o novo status da aposta: (Green / Red / Em andamento)', currentStatus);
-
-    if (novoStatus === null || novoStatus === '') {
-        return; // Se o usuário cancelar ou não preencher, não faz nada
+       
+        carregarApostas();
     }
 
-    // Atualizar o status na tabela
-    statusCell.innerHTML = novoStatus;
+    
+    function adicionarLinhaTabela(aposta) {
+        let tabela = document.getElementById('tabelaApostas');
+        let linha = tabela.insertRow();
+        linha.setAttribute('data-id', aposta.id);
 
-    // Atualizar o status no localStorage
-    let apostasSalvas = JSON.parse(localStorage.getItem('apostas')) || [];
-    apostasSalvas[apostaIndex].status = novoStatus;
-    localStorage.setItem('apostas', JSON.stringify(apostasSalvas));
-}
+        let statusButton = `<button onclick="editarStatus(${aposta.id})">Editar Status</button>`;
 
-// Função para remover uma aposta
-function removerAposta(botao) {
-    let linha = botao.parentNode.parentNode;
-    let site = linha.cells[0].innerText;
+        
+        let odd = aposta.odd ? aposta.odd.toFixed(2) : 'N/A';
+        let valor = aposta.valor ? aposta.valor.toFixed(2) : 'N/A';
+        let lucro = aposta.lucro ? aposta.lucro.toFixed(2) : 'N/A';
+        let descricao = aposta.descricao || 'Sem descrição';
+        let dataFormatada = aposta.data ? formatarData(aposta.data) : 'Não definida';
 
-    // Remover a aposta do localStorage
-    let apostasSalvas = JSON.parse(localStorage.getItem('apostas')) || [];
-    apostasSalvas = apostasSalvas.filter(aposta => aposta.nomeSite !== site);
-    localStorage.setItem('apostas', JSON.stringify(apostasSalvas));
+        linha.innerHTML = `
+            <td><a href="${aposta.site}" target="_blank" class="hidden-link">${aposta.nomeSite}</a></td>
+            <td>${odd}</td>
+            <td>R$ ${valor}</td>
+            <td>R$ ${lucro}</td>
+            <td>${descricao}</td>
+            <td><span class="status">${aposta.status}</span></td>
+            <td class="data-td">${dataFormatada}</td>
+            <td>
+                ${statusButton}
+                <button onclick="removerAposta(${aposta.id})">Remover</button>
+            </td>
+        `;
 
-    // Remover linha da tabela
-    linha.remove();
-}
+        
+        atualizarCorStatus(linha.cells[5], aposta.status);
+    }
 
-// Carregar apostas ao carregar a página
-window.onload = carregarApostas;
+    
+    function carregarApostas() {
+        let apostasSalvas = JSON.parse(localStorage.getItem('apostas')) || [];
+        let tabela = document.getElementById('tabelaApostas');
+        tabela.innerHTML = ""; 
+
+        apostasSalvas.forEach(adicionarLinhaTabela);
+
+        
+        calcularTotalLucro();
+    }
+
+   
+    function formatarData(data) {
+        if (!data || !data.includes('/')) return 'Não definida';
+
+        let partes = data.split('/');
+        if (partes.length < 2) return 'Não definida';
+
+        let dia = partes[0].padStart(2, '0');
+        let mes = partes[1].padStart(2, '0');
+        let ano = partes[2] ? partes[2] : new Date().getFullYear();
+
+        return `${dia}/${mes}/${ano}`;
+    }
+
+    
+    window.editarStatus = function(id) {
+        let apostasSalvas = JSON.parse(localStorage.getItem('apostas')) || [];
+        let aposta = apostasSalvas.find(aposta => aposta.id === id);
+
+        if (!aposta) return;
+
+        let novoStatus = prompt('Informe o novo status da aposta: (Green / Red / Em andamento)', aposta.status);
+
+        if (novoStatus === null || novoStatus === '') {
+            return; 
+        }
+
+        aposta.status = novoStatus;
+        localStorage.setItem('apostas', JSON.stringify(apostasSalvas));
+        carregarApostas();
+    }
+
+    
+    window.removerAposta = function(id) {
+        let apostasSalvas = JSON.parse(localStorage.getItem('apostas')) || [];
+        apostasSalvas = apostasSalvas.filter(aposta => aposta.id !== id);
+        localStorage.setItem('apostas', JSON.stringify(apostasSalvas));
+        carregarApostas();
+    }
+
+   
+    function atualizarCorStatus(celula, status) {
+        celula.classList.remove('status-green', 'status-red');
+        if (status.toLowerCase() === 'green') {
+            celula.classList.add('status-green');
+        } else if (status.toLowerCase() === 'red') {
+            celula.classList.add('status-red');
+        }
+    }
+
+    
+    function calcularTotalLucro() {
+        let apostasSalvas = JSON.parse(localStorage.getItem('apostas')) || [];
+        let totalLucro = apostasSalvas.reduce((total, aposta) => {
+            if (aposta.status.toLowerCase() === 'green') {
+                return total + aposta.lucro;
+            } else if (aposta.status.toLowerCase() === 'red') {
+                return total - aposta.valor;
+            }
+            return total;
+        }, 0);
+        document.getElementById('totalLucro').textContent = totalLucro.toFixed(2);
+    }
+
+    
+    new Sortable(document.getElementById('tabelaApostas'), {
+        animation: 150,
+        onEnd: function (evt) {
+            let apostasSalvas = JSON.parse(localStorage.getItem('apostas')) || [];
+            let novaOrdem = [];
+            let linhas = evt.from.children;
+
+            for (let i = 0; i < linhas.length; i++) {
+                let id = parseInt(linhas[i].getAttribute('data-id'));
+                let aposta = apostasSalvas.find(aposta => aposta.id === id);
+                novaOrdem.push(aposta);
+            }
+
+            localStorage.setItem('apostas', JSON.stringify(novaOrdem));
+            carregarApostas();
+        }
+    });
+
+    
+    window.onload = carregarApostas;
+});
