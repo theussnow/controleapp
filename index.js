@@ -1,5 +1,22 @@
 document.addEventListener("DOMContentLoaded", function () {
     const dataInput = document.getElementById('data');
+    let editMode = false;
+
+    
+    function migrarDados() {
+        let apostasSalvas = JSON.parse(localStorage.getItem('apostas')) || [];
+        let dadosMigrados = apostasSalvas.map(aposta => {
+            
+            if (!aposta.hasOwnProperty('nomeSite')) {
+                aposta.nomeSite = aposta.site.length > 20 ? aposta.site.substring(0, 20) + "..." : aposta.site;
+            }
+            return aposta;
+        });
+        localStorage.setItem('apostas', JSON.stringify(dadosMigrados));
+    }
+
+    
+    migrarDados();
 
     dataInput.addEventListener('input', function (e) {
         let value = e.target.value.replace(/\D/g, ''); 
@@ -12,7 +29,14 @@ document.addEventListener("DOMContentLoaded", function () {
         e.target.value = value;
     });
 
-    
+    window.toggleEditMode = function() {
+        editMode = !editMode;
+        document.getElementById('toggleEditMode').textContent = editMode ? 'Organizar tabela (segure e arraste)' : 'Modo de Edição (remover ou alterar status)';
+        document.getElementById('modeDescription').textContent = editMode ? 'Clique para alternar para o modo de organização' : 'Clique para alternar para o modo de edição';
+        document.getElementById('tabelaApostas').classList.toggle('edit-mode', editMode);
+        sortable.option("disabled", editMode); 
+    };
+
     window.adicionarAposta = function() {
         let site = document.getElementById('site').value;
         let odd = parseFloat(document.getElementById('odd').value);
@@ -35,22 +59,17 @@ document.addEventListener("DOMContentLoaded", function () {
             data: data
         };
 
-        
         adicionarLinhaTabela(aposta);
 
-        
         let apostasSalvas = JSON.parse(localStorage.getItem('apostas')) || [];
         apostasSalvas.push(aposta);
         localStorage.setItem('apostas', JSON.stringify(apostasSalvas));
 
-        
         document.getElementById('apostaForm').reset();
 
-       
         carregarApostas();
-    }
+    };
 
-    
     function adicionarLinhaTabela(aposta) {
         let tabela = document.getElementById('tabelaApostas');
         let linha = tabela.insertRow();
@@ -58,7 +77,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
         let statusButton = `<button onclick="editarStatus(${aposta.id})">Editar Status</button>`;
 
-        
         let odd = aposta.odd ? aposta.odd.toFixed(2) : 'N/A';
         let valor = aposta.valor ? aposta.valor.toFixed(2) : 'N/A';
         let lucro = aposta.lucro ? aposta.lucro.toFixed(2) : 'N/A';
@@ -79,11 +97,9 @@ document.addEventListener("DOMContentLoaded", function () {
             </td>
         `;
 
-        
         atualizarCorStatus(linha.cells[5], aposta.status);
     }
 
-    
     function carregarApostas() {
         let apostasSalvas = JSON.parse(localStorage.getItem('apostas')) || [];
         let tabela = document.getElementById('tabelaApostas');
@@ -91,11 +107,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
         apostasSalvas.forEach(adicionarLinhaTabela);
 
-        
         calcularTotalLucro();
     }
 
-   
     function formatarData(data) {
         if (!data || !data.includes('/')) return 'Não definida';
 
@@ -109,7 +123,6 @@ document.addEventListener("DOMContentLoaded", function () {
         return `${dia}/${mes}/${ano}`;
     }
 
-    
     window.editarStatus = function(id) {
         let apostasSalvas = JSON.parse(localStorage.getItem('apostas')) || [];
         let aposta = apostasSalvas.find(aposta => aposta.id === id);
@@ -125,17 +138,15 @@ document.addEventListener("DOMContentLoaded", function () {
         aposta.status = novoStatus;
         localStorage.setItem('apostas', JSON.stringify(apostasSalvas));
         carregarApostas();
-    }
+    };
 
-    
     window.removerAposta = function(id) {
         let apostasSalvas = JSON.parse(localStorage.getItem('apostas')) || [];
         apostasSalvas = apostasSalvas.filter(aposta => aposta.id !== id);
         localStorage.setItem('apostas', JSON.stringify(apostasSalvas));
         carregarApostas();
-    }
+    };
 
-   
     function atualizarCorStatus(celula, status) {
         celula.classList.remove('status-green', 'status-red');
         if (status.toLowerCase() === 'green') {
@@ -145,7 +156,6 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    
     function calcularTotalLucro() {
         let apostasSalvas = JSON.parse(localStorage.getItem('apostas')) || [];
         let totalLucro = apostasSalvas.reduce((total, aposta) => {
@@ -159,25 +169,25 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById('totalLucro').textContent = totalLucro.toFixed(2);
     }
 
-    
-    new Sortable(document.getElementById('tabelaApostas'), {
+    const sortable = new Sortable(document.getElementById('tabelaApostas'), {
         animation: 150,
         onEnd: function (evt) {
-            let apostasSalvas = JSON.parse(localStorage.getItem('apostas')) || [];
-            let novaOrdem = [];
-            let linhas = evt.from.children;
+            if (!editMode) {
+                let apostasSalvas = JSON.parse(localStorage.getItem('apostas')) || [];
+                let novaOrdem = [];
+                let linhas = evt.from.children;
 
-            for (let i = 0; i < linhas.length; i++) {
-                let id = parseInt(linhas[i].getAttribute('data-id'));
-                let aposta = apostasSalvas.find(aposta => aposta.id === id);
-                novaOrdem.push(aposta);
+                for (let i = 0; i < linhas.length; i++) {
+                    let id = parseInt(linhas[i].getAttribute('data-id'));
+                    let aposta = apostasSalvas.find(aposta => aposta.id === id);
+                    novaOrdem.push(aposta);
+                }
+
+                localStorage.setItem('apostas', JSON.stringify(novaOrdem));
+                carregarApostas();
             }
-
-            localStorage.setItem('apostas', JSON.stringify(novaOrdem));
-            carregarApostas();
         }
     });
 
-    
     window.onload = carregarApostas;
 });

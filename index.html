@@ -9,6 +9,10 @@
 </head>
 <body>
     <h2>Controle de Apostas</h2>
+    <div class="mode-toggle-container">
+        <button id="toggleEditMode" onclick="toggleEditMode()">Modo de Edição</button>
+        <span id="modeDescription">Clique para alternar entre modo de edição e organização</span>
+    </div>
     <form id="apostaForm">
         <input type="text" id="site" placeholder="Site">
         <input type="number" id="odd" placeholder="Odd" step="0.01">
@@ -44,7 +48,6 @@
     
     <script src="index.js"></script>
     <script>
-        
         document.getElementById('anoAtual').textContent = new Date().getFullYear();
     </script>
 </body>

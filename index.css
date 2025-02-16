@@ -22,6 +22,34 @@ h2 {
     animation: fadeInDown 1s ease-in-out;
 }
 
+.mode-toggle-container {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+#toggleEditMode {
+    padding: 10px 20px;
+    font-size: 1rem;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+#toggleEditMode:hover {
+    background-color: #45a049;
+    transform: scale(1.05);
+}
+
+#modeDescription {
+    display: block;
+    margin-top: 10px;
+    font-size: 0.9rem;
+    color: #666;
+}
+
 form {
     display: flex;
     flex-wrap: wrap;
@@ -143,7 +171,7 @@ footer p {
     color: #333;
 }
 
-/* Animações */
+
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -213,4 +241,9 @@ footer p {
     th, td {
         padding: 6px;
     }
+}
+
+
+.edit-mode .sortable-chosen {
+    cursor: move;
 }
