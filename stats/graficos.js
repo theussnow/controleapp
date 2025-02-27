@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
-    // Elementos do DOM
+    
     const toggleDarkModeBtn = document.getElementById('toggleDarkMode');
     const lucroCanvas = document.getElementById('lucroChart');
     const progressaoCanvas = document.getElementById('progressaoChart');
@@ -20,11 +20,16 @@ document.addEventListener("DOMContentLoaded", function () {
     const totalLucroEl = document.getElementById('totalLucro');
     const roiEl = document.getElementById('roi');
     const progressaoEl = document.getElementById('progressao');
+    if (!totalApostasEl || !totalLucroEl || !roiEl || !progressaoEl) {
+        console.error('Elementos de estatísticas não encontrados:', { totalApostasEl, totalLucroEl, roiEl, progressaoEl });
+        alert('Erro: Elementos de estatísticas não encontrados.');
+        return;
+    }
 
-    // Período inicial
-    let periodoAtual = '1m'; // Padrão: 1 mês
+    
+    let periodoAtual = '1m'; 
 
-    // Função para formatar data (copiada do index.js)
+    
     function formatarData(data) {
         if (!data || !data.includes('/')) {
             const hoje = new Date();
@@ -33,7 +38,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         let partes = data.split('/');
         if (partes.length < 3 || !partes[0] || !partes[1]) {
-            return '01/01/2025'; // Fallback para 2025
+            return '01/01/2025'; 
         }
 
         let dia = partes[0].padStart(2, '0');
@@ -42,9 +47,18 @@ document.addEventListener("DOMContentLoaded", function () {
         return `${dia}/${mes}/${ano}`;
     }
 
-    // Função para calcular os dados
+    
     function calcularDados() {
-        const apostasSalvas = JSON.parse(localStorage.getItem('apostas')) || [];
+        const apostasSalvas = JSON.parse(localStorage.getItem('apostas') || '[]');
+        if (!Array.isArray(apostasSalvas)) {
+            console.error('Dados no localStorage não são um array válido:', apostasSalvas);
+            alert('Erro: Dados no localStorage inválidos. Reiniciando...');
+            localStorage.setItem('apostas', '[]');
+            return {
+                lucroPorStatus: { green: 0, red: 0, emAndamento: 0 },
+                progressao: { labels: [], data: [] }
+            };
+        }
         console.log('Apostas salvas do localStorage (raw):', apostasSalvas);
 
         const lucroPorData = {};
@@ -58,7 +72,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 return;
             }
 
-            // Formatar data para corrigir entradas inválidas
+            
             let dataStrOriginal = aposta.data || '';
             let dataStr = formatarData(dataStrOriginal);
             console.log(`Data original: ${dataStrOriginal}, Data formatada: ${dataStr}`);
@@ -80,7 +94,7 @@ document.addEventListener("DOMContentLoaded", function () {
             } else if (aposta.status && aposta.status.toLowerCase() === 'red') {
                 lucroPorData[dataFormatada] -= (aposta.valor || 0);
                 totalLucro -= (aposta.valor || 0);
-            } // "Em andamento" não contribui para lucro
+            } 
             totalValorInvestido += (aposta.valor || 0);
             console.log(`Lucro parcial para ${dataFormatada}: ${lucroPorData[dataFormatada]}`);
         });
@@ -103,8 +117,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
         console.log('Dados filtrados por período:', dadosFiltrados);
 
+        
+        const lucroGreen = apostasSalvas.reduce((sum, a) => a.status?.toLowerCase() === 'green' ? sum + (a.lucro || 0) : sum, 0);
+        const perdaRed = apostasSalvas.reduce((sum, a) => a.status?.toLowerCase() === 'red' ? sum + (a.valor || 0) : sum, 0);
+        const valorEmAndamento = apostasSalvas.reduce((sum, a) => a.status?.toLowerCase() === 'em andamento' ? sum + (a.valor || 0) : sum, 0);
+        totalLucro = lucroGreen - perdaRed; 
+
         const roi = numApostas > 0 ? ((totalLucro / totalValorInvestido) * 100).toFixed(2) : 0;
-        const progressao = ((totalLucro / (totalValorInvestido + totalLucro)) * 100).toFixed(2) || 0; // Ajustado para incluir perdas
+        const progressao = ((totalLucro / (totalValorInvestido + totalLucro)) * 100).toFixed(2) || 0;
 
         totalApostasEl.textContent = numApostas || 0;
         totalLucroEl.textContent = totalLucro.toFixed(2) || '0.00';
@@ -113,9 +133,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
         return {
             lucroPorStatus: {
-                green: apostasSalvas.reduce((sum, a) => a.status?.toLowerCase() === 'green' ? sum + (a.lucro || 0) : sum, 0),
-                red: apostasSalvas.reduce((sum, a) => a.status?.toLowerCase() === 'red' ? sum - (a.valor || 0) : sum, 0),
-                emAndamento: apostasSalvas.reduce((sum, a) => a.status?.toLowerCase() === 'em andamento' ? sum + (a.valor || 0) : sum, 0) // Soma o valor investido
+                green: totalLucro, 
+                red: -perdaRed,    
+                emAndamento: valorEmAndamento 
             },
             progressao: {
                 labels: Object.keys(dadosFiltrados).sort(),
@@ -154,7 +174,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     ],
                     borderColor: isDarkMode ? '#e0e0e0' : '#333',
                     borderWidth: 1,
-                    skipNull: false // Garante que barras com valor 0 sejam exibidas
+                    skipNull: false 
                 }]
             },
             options: {
@@ -171,7 +191,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         ticks: {
                             color: isDarkMode ? '#ffffff' : '#333',
                             font: { size: 16 },
-                            callback: function(value) { return 'R$ ' + value.toFixed(2); },
+                            callback: function(value) { return 'R$ ' + (value >= 0 ? value.toFixed(2) : (-value).toFixed(2)); },
                             padding: 5
                         },
                         grid: {
@@ -210,7 +230,7 @@ document.addEventListener("DOMContentLoaded", function () {
                                     label += ': ';
                                 }
                                 if (context.parsed.y !== null) {
-                                    label += 'R$ ' + context.parsed.y.toFixed(2);
+                                    label += (context.parsed.y >= 0 ? 'R$ ' : '-R$ ') + Math.abs(context.parsed.y).toFixed(2);
                                 }
                                 return label;
                             }
@@ -258,7 +278,7 @@ document.addEventListener("DOMContentLoaded", function () {
         let data = dados.progressao.data;
         console.log('Labels antes de ajustar:', labels, 'Data:', data);
 
-        // Ajuste para garantir progressão acumulada
+        
         let acumulado = 0;
         let dataAcumulada = [];
         labels.forEach((label, index) => {
@@ -310,7 +330,7 @@ document.addEventListener("DOMContentLoaded", function () {
                             font: { size: 16 },
                             maxRotation: 0,
                             minRotation: 0,
-                            autoSkip: false // Garante que todas as datas sejam exibidas
+                            autoSkip: false 
                         },
                         grid: { display: false }
                     }
