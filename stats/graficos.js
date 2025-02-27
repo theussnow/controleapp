@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
-    
+    // Elementos do DOM
     const toggleDarkModeBtn = document.getElementById('toggleDarkMode');
     const lucroCanvas = document.getElementById('lucroChart');
     const progressaoCanvas = document.getElementById('progressaoChart');
@@ -13,28 +13,34 @@ document.addEventListener("DOMContentLoaded", function () {
         console.error('Contexto do canvas inválido:', { lucroCtx, progressaoCtx });
         return;
     }
-    let lucroChart, progressaoChart; 
+    let lucroChart, progressaoChart; // Instâncias dos gráficos
     const totalApostasEl = document.getElementById('totalApostas');
     const totalLucroEl = document.getElementById('totalLucro');
     const roiEl = document.getElementById('roi');
     const progressaoEl = document.getElementById('progressao');
 
-    
-    let periodoAtual = '1m'; 
+    // Período inicial
+    let periodoAtual = '1m'; // Padrão: 1 mês
 
-    
-    function ajustarResolucaoCanvas(canvas) {
-        const scale = window.devicePixelRatio;
-        canvas.width = canvas.offsetWidth * scale;
-        canvas.height = canvas.offsetHeight * scale;
-        canvas.getContext('2d').scale(scale, scale);
+    // Função para formatar data (copiada do index.js)
+    function formatarData(data) {
+        if (!data || !data.includes('/')) {
+            const hoje = new Date();
+            return `${hoje.getDate().toString().padStart(2, '0')}/${(hoje.getMonth() + 1).toString().padStart(2, '0')}/${hoje.getFullYear()}`;
+        }
+
+        let partes = data.split('/');
+        if (partes.length < 3 || !partes[0] || !partes[1]) {
+            return '01/01/2025'; // Fallback para 2025
+        }
+
+        let dia = partes[0].padStart(2, '0');
+        let mes = partes[1].padStart(2, '0');
+        let ano = partes[2] ? partes[2].padStart(4, '2025') : '2025';
+        return `${dia}/${mes}/${ano}`;
     }
 
-    
-    ajustarResolucaoCanvas(lucroCanvas);
-    ajustarResolucaoCanvas(progressaoCanvas);
-
-    
+    // Função para calcular os dados
     function calcularDados() {
         const apostasSalvas = JSON.parse(localStorage.getItem('apostas')) || [];
         console.log('Apostas salvas do localStorage (raw):', apostasSalvas);
@@ -50,20 +56,15 @@ document.addEventListener("DOMContentLoaded", function () {
                 return;
             }
 
-            let dataStr = aposta.data || '';
-            if (!dataStr || !dataStr.includes('/')) {
-                console.warn('Data inválida ou ausente, usando data atual:', aposta);
-                dataStr = new Date().toLocaleDateString('pt-BR');
-            }
+            // Formatar data para corrigir entradas inválidas
+            let dataStrOriginal = aposta.data || '';
+            let dataStr = formatarData(dataStrOriginal);
+            console.log(`Data original: ${dataStrOriginal}, Data formatada: ${dataStr}`);
 
             let [dia, mes, ano] = dataStr.split('/').map(Number);
-            if (!dia || !mes || !ano) {
-                console.warn('Formato de data inválido, ignorando:', dataStr);
-                return;
-            }
-            ano = ano < 100 ? 2000 + ano : ano;
             const data = new Date(ano, mes - 1, dia);
             const dataFormatada = data.toISOString().split('T')[0];
+            console.log(`Data convertida para ISO: ${dataFormatada}`);
 
             if (isNaN(data.getTime())) {
                 console.warn('Data inválida após conversão:', dataStr);
@@ -77,12 +78,9 @@ document.addEventListener("DOMContentLoaded", function () {
             } else if (aposta.status && aposta.status.toLowerCase() === 'red') {
                 lucroPorData[dataFormatada] -= (aposta.valor || 0);
                 totalLucro -= (aposta.valor || 0);
-            } else {
-                lucroPorData[dataFormatada] += (aposta.lucro || 0);
-                totalLucro += (aposta.lucro || 0);
-            }
+            } // "Em andamento" não contribui
             totalValorInvestido += (aposta.valor || 0);
-            console.log(`Data processada: ${dataFormatada}, Lucro: ${lucroPorData[dataFormatada]}`);
+            console.log(`Lucro parcial para ${dataFormatada}: ${lucroPorData[dataFormatada]}`);
         });
 
         const datas = Object.keys(lucroPorData).map(d => new Date(d));
@@ -104,7 +102,7 @@ document.addEventListener("DOMContentLoaded", function () {
         console.log('Dados filtrados por período:', dadosFiltrados);
 
         const roi = numApostas > 0 ? ((totalLucro / totalValorInvestido) * 100).toFixed(2) : 0;
-        const progressao = totalLucro > 0 ? ((totalLucro / (totalValorInvestido + totalLucro)) * 100).toFixed(2) : 0;
+        const progressao = ((totalLucro / (totalValorInvestido + totalLucro)) * 100).toFixed(2) || 0; // Ajustado para incluir perdas
 
         totalApostasEl.textContent = numApostas || 0;
         totalLucroEl.textContent = totalLucro.toFixed(2) || '0.00';
@@ -115,7 +113,7 @@ document.addEventListener("DOMContentLoaded", function () {
             lucroPorStatus: {
                 green: apostasSalvas.reduce((sum, a) => a.status?.toLowerCase() === 'green' ? sum + (a.lucro || 0) : sum, 0),
                 red: apostasSalvas.reduce((sum, a) => a.status?.toLowerCase() === 'red' ? sum - (a.valor || 0) : sum, 0),
-                emAndamento: apostasSalvas.reduce((sum, a) => !['green', 'red'].includes(a.status?.toLowerCase()) ? sum + (a.lucro || 0) : sum, 0)
+                emAndamento: apostasSalvas.reduce((sum, a) => a.status?.toLowerCase() === 'em andamento' ? sum + 0 : sum, 0)
             },
             progressao: {
                 labels: Object.keys(dadosFiltrados).sort(),
@@ -164,22 +162,25 @@ document.addEventListener("DOMContentLoaded", function () {
                             display: true,
                             text: 'Lucro/Perda (R$)',
                             color: isDarkMode ? '#ffffff' : '#333',
-                            font: { size: 16, weight: 'bold', family: 'Arial' } 
+                            font: { size: 18, weight: 'bold', style: 'normal' },
+                            padding: { top: 10, bottom: 10 }
                         },
                         ticks: {
                             color: isDarkMode ? '#ffffff' : '#333',
-                            font: { size: 14, family: 'Arial' }, 
-                            callback: function(value) { return 'R$ ' + value; } 
+                            font: { size: 16 },
+                            callback: function(value) { return 'R$ ' + value.toFixed(2); },
+                            padding: 5
                         },
                         grid: {
                             color: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-                            drawBorder: false
+                            drawBorder: false,
+                            tickLength: 5
                         }
                     },
                     x: {
                         ticks: {
                             color: isDarkMode ? '#ffffff' : '#333',
-                            font: { size: 14, family: 'Arial' },
+                            font: { size: 16 },
                             maxRotation: 0,
                             minRotation: 0
                         },
@@ -190,12 +191,37 @@ document.addEventListener("DOMContentLoaded", function () {
                     legend: {
                         labels: {
                             color: isDarkMode ? '#ffffff' : '#333',
-                            font: { size: 16, weight: 'bold', family: 'Arial' }
-                        }
+                            font: { size: 16, weight: 'bold' }
+                        },
+                        position: 'bottom'
+                    },
+                    tooltip: {
+                        enabled: true,
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            label: function(context) {
+                                console.log('Tooltip data:', context);
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += 'R$ ' + context.parsed.y.toFixed(2);
+                                }
+                                return label;
+                            }
+                        },
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: '#ffffff',
+                        bodyColor: '#ffffff'
                     }
                 },
                 responsive: true,
-                maintainAspectRatio: false
+                maintainAspectRatio: false,
+                animation: {
+                    duration: 0
+                }
             }
         };
 
@@ -226,12 +252,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
         let labels = dados.progressao.labels;
         let data = dados.progressao.data;
-        if (labels.length === 1) {
-            const dataAnterior = new Date(new Date(labels[0]).getTime() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-            labels = [dataAnterior, labels[0]];
-            data = [0, data[0]];
-            console.log('Adicionado ponto fictício:', { labels, data });
-        }
+        console.log('Labels antes de ajustar:', labels, 'Data:', data);
+
+        // Ajuste para garantir progressão acumulada
+        let acumulado = 0;
+        let dataAcumulada = [];
+        labels.forEach((label, index) => {
+            acumulado += data[index] || 0;
+            dataAcumulada.push(acumulado);
+        });
+        console.log('Labels ajustadas:', labels, 'Data acumulada:', dataAcumulada);
 
         const config = {
             type: 'line',
@@ -239,7 +269,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 labels: labels,
                 datasets: [{
                     label: 'Progressão de Lucro (R$)',
-                    data: data,
+                    data: dataAcumulada,
                     borderColor: isDarkMode ? '#00e676' : '#4CAF50',
                     backgroundColor: isDarkMode ? 'rgba(0, 230, 118, 0.2)' : 'rgba(76, 175, 80, 0.2)',
                     borderWidth: 2,
@@ -253,26 +283,30 @@ document.addEventListener("DOMContentLoaded", function () {
                         beginAtZero: true,
                         title: {
                             display: true,
-                            text: 'Lucro/Perda (R$)',
+                            text: 'Progressão de Lucro (R$)',
                             color: isDarkMode ? '#ffffff' : '#333',
-                            font: { size: 16, weight: 'bold', family: 'Arial' }
+                            font: { size: 18, weight: 'bold', style: 'normal' },
+                            padding: { top: 10, bottom: 10 }
                         },
                         ticks: {
                             color: isDarkMode ? '#ffffff' : '#333',
-                            font: { size: 14, family: 'Arial' },
-                            callback: function(value) { return 'R$ ' + value; }
+                            font: { size: 16 },
+                            callback: function(value) { return 'R$ ' + value.toFixed(2); },
+                            padding: 5
                         },
                         grid: {
                             color: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-                            drawBorder: false
+                            drawBorder: false,
+                            tickLength: 5
                         }
                     },
                     x: {
                         ticks: {
                             color: isDarkMode ? '#ffffff' : '#333',
-                            font: { size: 14, family: 'Arial' },
+                            font: { size: 16 },
                             maxRotation: 0,
-                            minRotation: 0
+                            minRotation: 0,
+                            autoSkip: false // Garante que todas as datas sejam exibidas
                         },
                         grid: { display: false }
                     }
@@ -281,12 +315,37 @@ document.addEventListener("DOMContentLoaded", function () {
                     legend: {
                         labels: {
                             color: isDarkMode ? '#ffffff' : '#333',
-                            font: { size: 16, weight: 'bold', family: 'Arial' }
-                        }
+                            font: { size: 16, weight: 'bold' }
+                        },
+                        position: 'bottom'
+                    },
+                    tooltip: {
+                        enabled: true,
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            label: function(context) {
+                                console.log('Tooltip data:', context);
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += 'R$ ' + context.parsed.y.toFixed(2);
+                                }
+                                return label;
+                            }
+                        },
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: '#ffffff',
+                        bodyColor: '#ffffff'
                     }
                 },
                 responsive: true,
-                maintainAspectRatio: false
+                maintainAspectRatio: false,
+                animation: {
+                    duration: 0
+                }
             }
         };
 
