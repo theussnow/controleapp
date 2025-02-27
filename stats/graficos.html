@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gráficos de Apostas</title>
+    <link rel="stylesheet" href="/index.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h2>Gráficos de Apostas</h2>
+    <div class="mode-toggle-container">
+        <button id="toggleDarkMode" onclick="toggleDarkMode()">Modo Escuro</button>
+        <a href="/index.html"><button>Voltar ao Controle</button></a>
+    </div>
+    <div class="chart-container">
+        <h3>Lucro por Status</h3>
+        <canvas id="lucroChart" width="400" height="200"></canvas>
+        <h3>Progressão de Lucro</h3>
+        <canvas id="progressaoChart" width="400" height="200"></canvas>
+        <div class="periodo-buttons">
+            <button onclick="mudarPeriodo('1d')">1d</button>
+            <button onclick="mudarPeriodo('1s')">1s</button>
+            <button onclick="mudarPeriodo('1m')">1m</button>
+            <button onclick="mudarPeriodo('6m')">6m</button>
+            <button onclick="mudarPeriodo('1a')">1a</button>
+            <button onclick="mudarPeriodo('mais')">Mais</button>
+        </div>
+    </div>
+    <div class="stats-container">
+        <div class="stat-card">
+            <span class="stat-value" id="totalApostas">0</span>
+            <span class="stat-label">Apostas</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-value" id="totalLucro">0.00</span>
+            <span class="stat-label">Lucro (R$)</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-value" id="roi">0.00%</span>
+            <span class="stat-label">ROI</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-value" id="progressao">0.00%</span>
+            <span class="stat-label">Progressão</span>
+        </div>
+    </div>
+    <footer>
+        <p>© <span id="anoAtual"></span>Todos os direitos reservados.</p>
+    </footer>
+    <script src="graficos.js"></script>
+    <script>
+        document.getElementById('anoAtual').textContent = new Date().getFullYear();
+    </script>
+</body>
+</html>

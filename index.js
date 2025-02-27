@@ -1,12 +1,29 @@
 document.addEventListener("DOMContentLoaded", function () {
-    const dataInput = document.getElementById('data');
+    
     let editMode = false;
+    let organizeMode = false;
+    let currentPage = 1;
+    const itemsPerPage = 10;
+
+   
+    const dataInput = document.getElementById('data');
+    const toggleEditModeBtn = document.getElementById('toggleEditMode');
+    const editModeDescription = document.getElementById('editModeDescription');
+    const toggleOrganizeModeBtn = document.getElementById('toggleOrganizeMode');
+    const organizeModeDescription = document.getElementById('organizeModeDescription');
+    const toggleDarkModeBtn = document.getElementById('toggleDarkMode');
+    const tabelaApostas = document.getElementById('tabelaApostas');
+
+    
+    if (!toggleOrganizeModeBtn || !organizeModeDescription) {
+        console.error('Elementos não encontrados: toggleOrganizeMode ou organizeModeDescription');
+        return;
+    }
 
     
     function migrarDados() {
         let apostasSalvas = JSON.parse(localStorage.getItem('apostas')) || [];
         let dadosMigrados = apostasSalvas.map(aposta => {
-            
             if (!aposta.hasOwnProperty('nomeSite')) {
                 aposta.nomeSite = aposta.site.length > 20 ? aposta.site.substring(0, 20) + "..." : aposta.site;
             }
@@ -16,8 +33,75 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     
-    migrarDados();
+    const sortable = new Sortable(tabelaApostas, {
+        animation: 150,
+        disabled: true,
+        onEnd: function (evt) {
+            if (organizeMode) {
+                let apostasSalvas = JSON.parse(localStorage.getItem('apostas')) || [];
+                let novaOrdemPagina = [];
+                let linhas = evt.from.children;
 
+                
+                for (let i = 0; i < linhas.length; i++) {
+                    let id = parseInt(linhas[i].getAttribute('data-id'));
+                    let aposta = apostasSalvas.find(aposta => aposta.id === id);
+                    if (aposta) novaOrdemPagina.push(aposta);
+                }
+
+               
+                let inicio = (currentPage - 1) * itemsPerPage;
+                let fim = Math.min(inicio + itemsPerPage, apostasSalvas.length);
+
+                
+                let apostasAntes = apostasSalvas.slice(0, inicio);
+                let apostasDepois = apostasSalvas.slice(fim);
+
+                
+                let novaOrdemCompleta = [...apostasAntes, ...novaOrdemPagina, ...apostasDepois];
+
+                
+                localStorage.setItem('apostas', JSON.stringify(novaOrdemCompleta));
+                carregarApostas(currentPage);
+            }
+        }
+    });
+
+    
+    window.toggleEditMode = function() {
+        editMode = !editMode;
+        organizeMode = false;
+        toggleEditModeBtn.textContent = editMode ? 'Desativar Edição' : 'Modo de Edição';
+        editModeDescription.textContent = editMode ? 'Clique para desativar o modo de edição' : 'Clique para ativar o modo de edição (remover ou alterar status)';
+        toggleOrganizeModeBtn.textContent = 'Modo de Organização';
+        organizeModeDescription.textContent = 'Clique para ativar o modo de organização (segure e arraste)';
+        tabelaApostas.classList.toggle('edit-mode', editMode);
+        tabelaApostas.classList.remove('organize-mode');
+        sortable.option("disabled", true);
+        console.log('Modo de edição:', editMode, 'Sortable disabled:', sortable.options.disabled);
+    };
+
+    window.toggleOrganizeMode = function() {
+        organizeMode = !organizeMode;
+        editMode = false;
+        toggleOrganizeModeBtn.textContent = organizeMode ? 'Desativar Organização' : 'Modo de Organização';
+        organizeModeDescription.textContent = organizeMode ? 'Clique para desativar o modo de organização' : 'Clique para ativar o modo de organização (segure e arraste)';
+        toggleEditModeBtn.textContent = 'Modo de Edição';
+        editModeDescription.textContent = 'Clique para ativar o modo de edição (remover ou alterar status)';
+        tabelaApostas.classList.toggle('organize-mode', organizeMode);
+        tabelaApostas.classList.remove('edit-mode');
+        sortable.option("disabled", !organizeMode);
+        console.log('Modo de organização:', organizeMode, 'Sortable disabled:', sortable.options.disabled);
+    };
+
+    window.toggleDarkMode = function() {
+        document.body.classList.toggle('dark-mode');
+        const isDarkMode = document.body.classList.contains('dark-mode');
+        localStorage.setItem('darkMode', isDarkMode);
+        toggleDarkModeBtn.textContent = isDarkMode ? 'Modo Claro' : 'Modo Escuro';
+    };
+
+    
     dataInput.addEventListener('input', function (e) {
         let value = e.target.value.replace(/\D/g, ''); 
         if (value.length >= 2) {
@@ -29,23 +113,22 @@ document.addEventListener("DOMContentLoaded", function () {
         e.target.value = value;
     });
 
-    window.toggleEditMode = function() {
-        editMode = !editMode;
-        document.getElementById('toggleEditMode').textContent = editMode ? 'Organizar tabela (segure e arraste)' : 'Modo de Edição (remover ou alterar status)';
-        document.getElementById('modeDescription').textContent = editMode ? 'Clique para alternar para o modo de organização' : 'Clique para alternar para o modo de edição';
-        document.getElementById('tabelaApostas').classList.toggle('edit-mode', editMode);
-        sortable.option("disabled", editMode); 
-    };
+    const darkModePreference = localStorage.getItem('darkMode') === 'true';
+    if (darkModePreference) {
+        document.body.classList.add('dark-mode');
+        toggleDarkModeBtn.textContent = 'Modo Claro';
+    }
 
     window.adicionarAposta = function() {
-        let site = document.getElementById('site').value;
-        let odd = parseFloat(document.getElementById('odd').value);
-        let valor = parseFloat(document.getElementById('valor').value);
-        let descricao = document.getElementById('descricao').value;
-        let data = document.getElementById('data').value || ''; 
+        let site = document.getElementById('site').value || '';
+        let odd = parseFloat(document.getElementById('odd').value) || 0;
+        let valor = parseFloat(document.getElementById('valor').value) || 0;
+        let descricao = document.getElementById('descricao').value || '';
+        let dataInput = document.getElementById('data').value || ''; 
         let lucro = (odd * valor) - valor;
 
         let nomeSite = site.length > 20 ? site.substring(0, 20) + "..." : site;
+        let data = formatarData(dataInput); 
 
         let aposta = {
             id: Date.now(), 
@@ -59,20 +142,16 @@ document.addEventListener("DOMContentLoaded", function () {
             data: data
         };
 
-        adicionarLinhaTabela(aposta);
-
         let apostasSalvas = JSON.parse(localStorage.getItem('apostas')) || [];
         apostasSalvas.push(aposta);
         localStorage.setItem('apostas', JSON.stringify(apostasSalvas));
 
         document.getElementById('apostaForm').reset();
-
-        carregarApostas();
+        carregarApostas(currentPage);
     };
 
     function adicionarLinhaTabela(aposta) {
-        let tabela = document.getElementById('tabelaApostas');
-        let linha = tabela.insertRow();
+        let linha = tabelaApostas.insertRow();
         linha.setAttribute('data-id', aposta.id);
 
         let statusButton = `<button onclick="editarStatus(${aposta.id})">Editar Status</button>`;
@@ -100,30 +179,58 @@ document.addEventListener("DOMContentLoaded", function () {
         atualizarCorStatus(linha.cells[5], aposta.status);
     }
 
-    function carregarApostas() {
+    function carregarApostas(pagina = 1) {
+        currentPage = pagina;
         let apostasSalvas = JSON.parse(localStorage.getItem('apostas')) || [];
-        let tabela = document.getElementById('tabelaApostas');
-        tabela.innerHTML = ""; 
+        tabelaApostas.innerHTML = ""; 
 
-        apostasSalvas.forEach(adicionarLinhaTabela);
+        let inicio = (pagina - 1) * itemsPerPage;
+        let fim = inicio + itemsPerPage;
+        let apostasPagina = apostasSalvas.slice(inicio, fim);
 
+        apostasPagina.forEach(adicionarLinhaTabela);
         calcularTotalLucro();
+        atualizarPaginacao(pagina, apostasSalvas.length);
+    }
+
+    function atualizarPaginacao(paginaAtual, totalApostas) {
+        let totalPaginas = Math.ceil(totalApostas / itemsPerPage);
+        let paginacao = document.getElementById('pagination');
+        paginacao.innerHTML = "";
+
+        for (let i = 1; i <= totalPaginas; i++) {
+            let botao = document.createElement('button');
+            botao.textContent = i;
+            botao.className = 'page-button' + (i === paginaAtual ? ' active' : '');
+            botao.onclick = function() {
+                carregarApostas(i);
+            };
+            paginacao.appendChild(botao);
+        }
     }
 
     function formatarData(data) {
-        if (!data || !data.includes('/')) return 'Não definida';
+        if (!data || !data.includes('/')) {
+            const hoje = new Date();
+            return `${hoje.getDate().toString().padStart(2, '0')}/${(hoje.getMonth() + 1).toString().padStart(2, '0')}/${hoje.getFullYear()}`;
+        }
 
         let partes = data.split('/');
-        if (partes.length < 2) return 'Não definida';
+        if (partes.length < 3 || !partes[0] || !partes[1]) {
+            return '01/01/2025'; 
+        }
 
         let dia = partes[0].padStart(2, '0');
         let mes = partes[1].padStart(2, '0');
-        let ano = partes[2] ? partes[2] : new Date().getFullYear();
-
+        let ano = partes[2] ? partes[2].padStart(4, '2025') : '2025'; 
         return `${dia}/${mes}/${ano}`;
     }
 
     window.editarStatus = function(id) {
+        if (!editMode) {
+            alert('Ative o modo de edição para alterar o status.');
+            return;
+        }
         let apostasSalvas = JSON.parse(localStorage.getItem('apostas')) || [];
         let aposta = apostasSalvas.find(aposta => aposta.id === id);
 
@@ -137,14 +244,18 @@ document.addEventListener("DOMContentLoaded", function () {
 
         aposta.status = novoStatus;
         localStorage.setItem('apostas', JSON.stringify(apostasSalvas));
-        carregarApostas();
+        carregarApostas(currentPage);
     };
 
     window.removerAposta = function(id) {
+        if (!editMode) {
+            alert('Ative o modo de edição para remover apostas.');
+            return;
+        }
         let apostasSalvas = JSON.parse(localStorage.getItem('apostas')) || [];
         apostasSalvas = apostasSalvas.filter(aposta => aposta.id !== id);
         localStorage.setItem('apostas', JSON.stringify(apostasSalvas));
-        carregarApostas();
+        carregarApostas(currentPage);
     };
 
     function atualizarCorStatus(celula, status) {
@@ -160,34 +271,15 @@ document.addEventListener("DOMContentLoaded", function () {
         let apostasSalvas = JSON.parse(localStorage.getItem('apostas')) || [];
         let totalLucro = apostasSalvas.reduce((total, aposta) => {
             if (aposta.status.toLowerCase() === 'green') {
-                return total + aposta.lucro;
+                return total + (aposta.lucro || 0);
             } else if (aposta.status.toLowerCase() === 'red') {
-                return total - aposta.valor;
+                return total - (aposta.valor || 0);
             }
-            return total;
+            return total; 
         }, 0);
         document.getElementById('totalLucro').textContent = totalLucro.toFixed(2);
     }
-
-    const sortable = new Sortable(document.getElementById('tabelaApostas'), {
-        animation: 150,
-        onEnd: function (evt) {
-            if (!editMode) {
-                let apostasSalvas = JSON.parse(localStorage.getItem('apostas')) || [];
-                let novaOrdem = [];
-                let linhas = evt.from.children;
-
-                for (let i = 0; i < linhas.length; i++) {
-                    let id = parseInt(linhas[i].getAttribute('data-id'));
-                    let aposta = apostasSalvas.find(aposta => aposta.id === id);
-                    novaOrdem.push(aposta);
-                }
-
-                localStorage.setItem('apostas', JSON.stringify(novaOrdem));
-                carregarApostas();
-            }
-        }
-    });
-
-    window.onload = carregarApostas;
+    
+    migrarDados();
+    carregarApostas(1);
 });

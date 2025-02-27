@@ -10,8 +10,14 @@
 <body>
     <h2>Controle de Apostas</h2>
     <div class="mode-toggle-container">
-        <button id="toggleEditMode" onclick="toggleEditMode()">Modo de Edição</button>
-        <span id="modeDescription">Clique para alternar entre modo de edição e organização</span>
+        <button id="toggleEditMode" onclick="toggleEditMode()" class="tooltip">Modo de Edição
+            <span class="tooltiptext" id="editModeDescription">Clique para ativar o modo de edição (remover ou alterar status)</span>
+        </button>
+        <button id="toggleOrganizeMode" onclick="toggleOrganizeMode()" class="tooltip">Modo de Organização
+            <span class="tooltiptext" id="organizeModeDescription">Clique para ativar o modo de organização (segure e arraste)</span>
+        </button>
+        <button id="toggleDarkMode" onclick="toggleDarkMode()">Modo Escuro</button>
+        <a href="./stats/graficos.html"><button>Estatísticas</button></a> 
     </div>
     <form id="apostaForm">
         <input type="text" id="site" placeholder="Site">
@@ -38,12 +44,14 @@
         <tbody id="tabelaApostas"></tbody>
     </table>
     
+    <div class="pagination" id="pagination"></div>
+    
     <div class="total-lucro">
         <h3>Total de Lucro: R$ <span id="totalLucro">0.00</span></h3>
     </div>
     
     <footer>
-        <p>&copy; <span id="anoAtual"></span>Todos os direitos reservados.</p>
+        <p>© <span id="anoAtual"></span>Todos os direitos reservados.</p>
     </footer>
     
     <script src="index.js"></script>
