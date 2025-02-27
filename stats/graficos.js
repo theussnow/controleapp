@@ -5,12 +5,14 @@ document.addEventListener("DOMContentLoaded", function () {
     const progressaoCanvas = document.getElementById('progressaoChart');
     if (!lucroCanvas || !progressaoCanvas) {
         console.error('Canvas não encontrado:', { lucroCanvas, progressaoCanvas });
+        alert('Erro: Canvas não encontrado. Verifique o HTML (ids "lucroChart" e "progressaoChart").');
         return;
     }
     const lucroCtx = lucroCanvas.getContext('2d');
     const progressaoCtx = progressaoCanvas.getContext('2d');
     if (!lucroCtx || !progressaoCtx) {
         console.error('Contexto do canvas inválido:', { lucroCtx, progressaoCtx });
+        alert('Erro: Contexto do canvas inválido.');
         return;
     }
     let lucroChart, progressaoChart; // Instâncias dos gráficos
@@ -78,7 +80,7 @@ document.addEventListener("DOMContentLoaded", function () {
             } else if (aposta.status && aposta.status.toLowerCase() === 'red') {
                 lucroPorData[dataFormatada] -= (aposta.valor || 0);
                 totalLucro -= (aposta.valor || 0);
-            } // "Em andamento" não contribui
+            } // "Em andamento" não contribui para lucro
             totalValorInvestido += (aposta.valor || 0);
             console.log(`Lucro parcial para ${dataFormatada}: ${lucroPorData[dataFormatada]}`);
         });
@@ -113,7 +115,7 @@ document.addEventListener("DOMContentLoaded", function () {
             lucroPorStatus: {
                 green: apostasSalvas.reduce((sum, a) => a.status?.toLowerCase() === 'green' ? sum + (a.lucro || 0) : sum, 0),
                 red: apostasSalvas.reduce((sum, a) => a.status?.toLowerCase() === 'red' ? sum - (a.valor || 0) : sum, 0),
-                emAndamento: apostasSalvas.reduce((sum, a) => a.status?.toLowerCase() === 'em andamento' ? sum + 0 : sum, 0)
+                emAndamento: apostasSalvas.reduce((sum, a) => a.status?.toLowerCase() === 'em andamento' ? sum + (a.valor || 0) : sum, 0) // Soma o valor investido
             },
             progressao: {
                 labels: Object.keys(dadosFiltrados).sort(),
@@ -151,7 +153,8 @@ document.addEventListener("DOMContentLoaded", function () {
                         isDarkMode ? '#bb86fc' : '#e0e0ff'
                     ],
                     borderColor: isDarkMode ? '#e0e0e0' : '#333',
-                    borderWidth: 1
+                    borderWidth: 1,
+                    skipNull: false // Garante que barras com valor 0 sejam exibidas
                 }]
             },
             options: {
@@ -231,6 +234,7 @@ document.addEventListener("DOMContentLoaded", function () {
             console.log('Gráfico de lucro criado com sucesso');
         } catch (error) {
             console.error('Erro ao criar gráfico de lucro:', error);
+            alert('Erro ao criar gráfico de lucro: ' + error.message);
         }
     }
 
@@ -355,6 +359,7 @@ document.addEventListener("DOMContentLoaded", function () {
             console.log('Gráfico de progressão criado com sucesso');
         } catch (error) {
             console.error('Erro ao criar gráfico de progressão:', error);
+            alert('Erro ao criar gráfico de progressão: ' + error.message);
         }
     }
 
