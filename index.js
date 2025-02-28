@@ -1,11 +1,9 @@
 document.addEventListener("DOMContentLoaded", function () {
-    
     let editMode = false;
     let organizeMode = false;
     let currentPage = 1;
     const itemsPerPage = 10;
 
-   
     const dataInput = document.getElementById('data');
     const toggleEditModeBtn = document.getElementById('toggleEditMode');
     const editModeDescription = document.getElementById('editModeDescription');
@@ -14,13 +12,11 @@ document.addEventListener("DOMContentLoaded", function () {
     const toggleDarkModeBtn = document.getElementById('toggleDarkMode');
     const tabelaApostas = document.getElementById('tabelaApostas');
 
-    
     if (!toggleOrganizeModeBtn || !organizeModeDescription) {
         console.error('Elementos não encontrados: toggleOrganizeMode ou organizeModeDescription');
         return;
     }
 
-    
     function migrarDados() {
         let apostasSalvas = JSON.parse(localStorage.getItem('apostas')) || [];
         let dadosMigrados = apostasSalvas.map(aposta => {
@@ -32,7 +28,6 @@ document.addEventListener("DOMContentLoaded", function () {
         localStorage.setItem('apostas', JSON.stringify(dadosMigrados));
     }
 
-    
     const sortable = new Sortable(tabelaApostas, {
         animation: 150,
         disabled: true,
@@ -42,32 +37,24 @@ document.addEventListener("DOMContentLoaded", function () {
                 let novaOrdemPagina = [];
                 let linhas = evt.from.children;
 
-                
                 for (let i = 0; i < linhas.length; i++) {
                     let id = parseInt(linhas[i].getAttribute('data-id'));
                     let aposta = apostasSalvas.find(aposta => aposta.id === id);
                     if (aposta) novaOrdemPagina.push(aposta);
                 }
 
-               
                 let inicio = (currentPage - 1) * itemsPerPage;
                 let fim = Math.min(inicio + itemsPerPage, apostasSalvas.length);
-
-                
                 let apostasAntes = apostasSalvas.slice(0, inicio);
                 let apostasDepois = apostasSalvas.slice(fim);
-
-                
                 let novaOrdemCompleta = [...apostasAntes, ...novaOrdemPagina, ...apostasDepois];
 
-                
                 localStorage.setItem('apostas', JSON.stringify(novaOrdemCompleta));
                 carregarApostas(currentPage);
             }
         }
     });
 
-    
     window.toggleEditMode = function() {
         editMode = !editMode;
         organizeMode = false;
@@ -75,10 +62,10 @@ document.addEventListener("DOMContentLoaded", function () {
         editModeDescription.textContent = editMode ? 'Clique para desativar o modo de edição' : 'Clique para ativar o modo de edição (remover ou alterar status)';
         toggleOrganizeModeBtn.textContent = 'Modo de Organização';
         organizeModeDescription.textContent = 'Clique para ativar o modo de organização (segure e arraste)';
-        tabelaApostas.classList.toggle('edit-mode', editMode);
-        tabelaApostas.classList.remove('organize-mode');
+        tabelaApostas.closest('table').classList.toggle('edit-mode', editMode);
+        tabelaApostas.closest('table').classList.remove('organize-mode');
         sortable.option("disabled", true);
-        console.log('Modo de edição:', editMode, 'Sortable disabled:', sortable.options.disabled);
+        carregarApostas(currentPage); 
     };
 
     window.toggleOrganizeMode = function() {
@@ -88,10 +75,10 @@ document.addEventListener("DOMContentLoaded", function () {
         organizeModeDescription.textContent = organizeMode ? 'Clique para desativar o modo de organização' : 'Clique para ativar o modo de organização (segure e arraste)';
         toggleEditModeBtn.textContent = 'Modo de Edição';
         editModeDescription.textContent = 'Clique para ativar o modo de edição (remover ou alterar status)';
-        tabelaApostas.classList.toggle('organize-mode', organizeMode);
-        tabelaApostas.classList.remove('edit-mode');
+        tabelaApostas.closest('table').classList.toggle('organize-mode', organizeMode);
+        tabelaApostas.closest('table').classList.remove('edit-mode');
         sortable.option("disabled", !organizeMode);
-        console.log('Modo de organização:', organizeMode, 'Sortable disabled:', sortable.options.disabled);
+        carregarApostas(currentPage); 
     };
 
     window.toggleDarkMode = function() {
@@ -101,9 +88,8 @@ document.addEventListener("DOMContentLoaded", function () {
         toggleDarkModeBtn.textContent = isDarkMode ? 'Modo Claro' : 'Modo Escuro';
     };
 
-    
     dataInput.addEventListener('input', function (e) {
-        let value = e.target.value.replace(/\D/g, ''); 
+        let value = e.target.value.replace(/\D/g, '');
         if (value.length >= 2) {
             value = value.slice(0, 2) + '/' + value.slice(2);
         }
@@ -124,14 +110,14 @@ document.addEventListener("DOMContentLoaded", function () {
         let odd = parseFloat(document.getElementById('odd').value) || 0;
         let valor = parseFloat(document.getElementById('valor').value) || 0;
         let descricao = document.getElementById('descricao').value || '';
-        let dataInput = document.getElementById('data').value || ''; 
+        let dataInput = document.getElementById('data').value || '';
         let lucro = (odd * valor) - valor;
 
         let nomeSite = site.length > 20 ? site.substring(0, 20) + "..." : site;
-        let data = formatarData(dataInput); 
+        let data = formatarData(dataInput);
 
         let aposta = {
-            id: Date.now(), 
+            id: Date.now(),
             site: site,
             nomeSite: nomeSite,
             odd: odd,
@@ -155,6 +141,10 @@ document.addEventListener("DOMContentLoaded", function () {
         linha.setAttribute('data-id', aposta.id);
 
         let statusButton = `<button onclick="editarStatus(${aposta.id})">Editar Status</button>`;
+        let moveButtons = organizeMode 
+            ? `<button onclick="moverParaPagina(${aposta.id}, -1)">◄</button>
+               <button onclick="moverParaPagina(${aposta.id}, 1)">►</button>` 
+            : '';
 
         let odd = aposta.odd ? aposta.odd.toFixed(2) : 'N/A';
         let valor = aposta.valor ? aposta.valor.toFixed(2) : 'N/A';
@@ -173,6 +163,7 @@ document.addEventListener("DOMContentLoaded", function () {
             <td>
                 ${statusButton}
                 <button onclick="removerAposta(${aposta.id})">Remover</button>
+                ${moveButtons}
             </td>
         `;
 
@@ -182,7 +173,7 @@ document.addEventListener("DOMContentLoaded", function () {
     function carregarApostas(pagina = 1) {
         currentPage = pagina;
         let apostasSalvas = JSON.parse(localStorage.getItem('apostas')) || [];
-        tabelaApostas.innerHTML = ""; 
+        tabelaApostas.innerHTML = "";
 
         let inicio = (pagina - 1) * itemsPerPage;
         let fim = inicio + itemsPerPage;
@@ -217,12 +208,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
         let partes = data.split('/');
         if (partes.length < 3 || !partes[0] || !partes[1]) {
-            return '01/01/2025'; 
+            return '01/01/2025';
         }
 
         let dia = partes[0].padStart(2, '0');
         let mes = partes[1].padStart(2, '0');
-        let ano = partes[2] ? partes[2].padStart(4, '2025') : '2025'; 
+        let ano = partes[2] ? partes[2].padStart(4, '2025') : '2025';
         return `${dia}/${mes}/${ano}`;
     }
 
@@ -239,7 +230,7 @@ document.addEventListener("DOMContentLoaded", function () {
         let novoStatus = prompt('Informe o novo status da aposta: (Green / Red / Em andamento)', aposta.status);
 
         if (novoStatus === null || novoStatus === '') {
-            return; 
+            return;
         }
 
         aposta.status = novoStatus;
@@ -256,6 +247,30 @@ document.addEventListener("DOMContentLoaded", function () {
         apostasSalvas = apostasSalvas.filter(aposta => aposta.id !== id);
         localStorage.setItem('apostas', JSON.stringify(apostasSalvas));
         carregarApostas(currentPage);
+    };
+
+    window.moverParaPagina = function(id, direcao) {
+        if (!organizeMode) {
+            alert('Ative o modo de organização para mover itens entre páginas.');
+            return;
+        }
+
+        let apostasSalvas = JSON.parse(localStorage.getItem('apostas')) || [];
+        let indice = apostasSalvas.findIndex(aposta => aposta.id === id);
+        if (indice === -1) return;
+
+        let novaPosicao = indice + (direcao * itemsPerPage);
+        if (novaPosicao < 0 || novaPosicao >= apostasSalvas.length) {
+            alert('Não é possível mover além dos limites da lista.');
+            return;
+        }
+
+        let apostaMovida = apostasSalvas.splice(indice, 1)[0];
+        apostasSalvas.splice(novaPosicao, 0, apostaMovida);
+
+        localStorage.setItem('apostas', JSON.stringify(apostasSalvas));
+        let novaPagina = Math.floor(novaPosicao / itemsPerPage) + 1;
+        carregarApostas(novaPagina);
     };
 
     function atualizarCorStatus(celula, status) {
@@ -275,11 +290,11 @@ document.addEventListener("DOMContentLoaded", function () {
             } else if (aposta.status.toLowerCase() === 'red') {
                 return total - (aposta.valor || 0);
             }
-            return total; 
+            return total;
         }, 0);
         document.getElementById('totalLucro').textContent = totalLucro.toFixed(2);
     }
-    
+
     migrarDados();
     carregarApostas(1);
 });

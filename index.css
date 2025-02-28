@@ -1,4 +1,3 @@
-
 body {
     font-family: 'Arial', sans-serif;
     background-color: #f0f0f0;
@@ -147,7 +146,7 @@ footer p {
     color: #333;
 }
 
-/* Estilos para o modo escuro */
+
 body.dark-mode {
     background-color: #121212;
     color: #e0e0e0;
@@ -236,7 +235,7 @@ body.dark-mode .total-lucro {
     color: #e0e0e0;
 }
 
-/* Estilos para a paginação */
+
 .pagination {
     text-align: center;
     margin-top: 20px;
@@ -278,7 +277,7 @@ body.dark-mode .pagination .page-button.active {
     color: #e0e0e0;
 }
 
-/* Estilo para o modo de organização */
+
 .organize-mode {
     background-color: #e0e0ff;
 }
@@ -310,7 +309,19 @@ body.dark-mode .organize-mode {
     background-color: transparent;
 }
 
-/* Ajuste no tooltip para múltiplos botões */
+
+.organize-mode button {
+    margin: 0 5px;
+    padding: 5px;
+    cursor: pointer;
+}
+
+.organize-mode button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+
 .tooltip {
     position: relative;
     display: inline-block;
@@ -342,7 +353,7 @@ body.dark-mode .tooltip .tooltiptext {
     background-color: #888;
 }
 
-/* Estilos para o gráfico e estatísticas */
+
 .chart-container {
     max-width: 600px;
     margin: 20px auto;
